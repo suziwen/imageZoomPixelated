@@ -1,0 +1,142 @@
+
+<!DOCTYPE HTML> 
+<html lang="en"><head> 
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+	<title>HTML Canvas Image Zoom</title> 
+	<style type="text/css" media="screen"> 
+		body { margin:2em 4em; background:#ddd; text-align:center }
+		img { vertical-align:top }
+		input { width:2em; text-align:right }
+		p.output { display:inline-block; text-align:center; margin:1em }
+		p.output img, p.output canvas { display:block; margin:0.2em auto }
+		canvas { display:inline; vertical-align:top }
+		#byline { font-style:italic; font-size:smaller; color:#666 }
+		input[type="range"] { width:10em }
+		.pixelated {
+			image-rendering:optimizeSpeed;             /* Legal fallback */
+			image-rendering:-moz-crisp-edges;          /* Firefox        */
+			image-rendering:-o-crisp-edges;            /* Opera          */
+			image-rendering:-webkit-optimize-contrast; /* Safari         */
+			image-rendering:optimize-contrast;         /* CSS3 Proposed  */
+			image-rendering:crisp-edges;               /* CSS4 Proposed  */
+			image-rendering:pixelated;                 /* CSS4 Proposed  */
+			-ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
+		}
+		h2 { font-family:sans-serif; font-size:110%; border-bottom:1px solid #999; margin-top:2em; margin-bottom:0.5em;}	
+		.str { color:#800000 }
+		.kwd { color:#00008b }
+		.com { color:gray }
+		.typ { color:#2b91af }
+		.lit { color:#800000 }
+		.pun { color:#000000 }
+		.pln { color:#000000 }
+		.tag { color:#800000 }
+		.atn { color:#ff0000 }
+		.atv { color:#0000ff }
+		.dec { color:#800080 }
+		pre { display:inline-block; text-align:left; margin-top:0;}
+	</style> 
+</head><body> 
+<p>Original 16x16 Image <img id="i1" src="chrome.png"> zoom factor <input id="zoom" type="range" min="1" max="32" value="12" size="2">&times;</p>
+<p class="output"><img id="i2" src="chrome.png"> Zoomed by Image Size</p>
+<p class="output"><canvas id="c1"></canvas> Zoomed by <code>drawImage()</code></p>
+<p class="output"><canvas id="c2"></canvas> Zoomed by Code</p>
+<p class="output"><img id="i3" class="pixelated" src="chrome.png"> Zoomed by Image Size + CSS</p>
+<p id="byline">Showing how to zoom up a bitmap with crisp edges using HTML Canvas or CSS.<br>HTML Canvas zoom written to support <a href="http://stackoverflow.com/questions/4875850/how-to-create-a-pixelized-svg-image-from-a-bitmap/4879849">this Stack Overflow answer</a>.<br>CSS Zoom written to support <a href="http://stackoverflow.com/questions/3900436/image-scaling-by-css-is-there-a-webkit-alternative-for-moz-crisp-edges/8888964?noredirect=1#comment29827016_8888964">this Stack Overflow answer</a>.</p>
+
+<h2>Zooming via HTML Canvas</h2>
+
+<pre class="lang-js prettyprint prettyprinted" style=""><code><span class="kwd">function</span><span class="pln"> drawPixelated</span><span class="pun">(</span><span class="pln">img</span><span class="pun">,</span><span class="pln">context</span><span class="pun">,</span><span class="pln">zoom</span><span class="pun">,</span><span class="pln">x</span><span class="pun">,</span><span class="pln">y</span><span class="pun">){</span><span class="pln">
+  </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(!</span><span class="pln">zoom</span><span class="pun">)</span><span class="pln"> zoom</span><span class="pun">=</span><span class="lit">4</span><span class="pun">;</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(!</span><span class="pln">x</span><span class="pun">)</span><span class="pln"> x</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(!</span><span class="pln">y</span><span class="pun">)</span><span class="pln"> y</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span><span class="pln">
+  </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(!</span><span class="pln">img</span><span class="pun">.</span><span class="pln">id</span><span class="pun">)</span><span class="pln"> img</span><span class="pun">.</span><span class="pln">id </span><span class="pun">=</span><span class="pln"> </span><span class="str">"__img"</span><span class="pun">+(</span><span class="pln">drawPixelated</span><span class="pun">.</span><span class="pln">lastImageId</span><span class="pun">++);</span><span class="pln">
+  </span><span class="kwd">var</span><span class="pln"> idata </span><span class="pun">=</span><span class="pln"> drawPixelated</span><span class="pun">.</span><span class="pln">idataById</span><span class="pun">[</span><span class="pln">img</span><span class="pun">.</span><span class="pln">id</span><span class="pun">];</span><span class="pln">
+  </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(!</span><span class="pln">idata</span><span class="pun">){</span><span class="pln">
+    </span><span class="kwd">var</span><span class="pln"> ctx </span><span class="pun">=</span><span class="pln"> document</span><span class="pun">.</span><span class="pln">createElement</span><span class="pun">(</span><span class="str">'canvas'</span><span class="pun">).</span><span class="pln">getContext</span><span class="pun">(</span><span class="str">'2d'</span><span class="pun">);</span><span class="pln">
+    ctx</span><span class="pun">.</span><span class="pln">width  </span><span class="pun">=</span><span class="pln"> img</span><span class="pun">.</span><span class="pln">width</span><span class="pun">;</span><span class="pln">
+    ctx</span><span class="pun">.</span><span class="pln">height </span><span class="pun">=</span><span class="pln"> img</span><span class="pun">.</span><span class="pln">height</span><span class="pun">;</span><span class="pln">
+    ctx</span><span class="pun">.</span><span class="pln">drawImage</span><span class="pun">(</span><span class="pln">img</span><span class="pun">,</span><span class="lit">0</span><span class="pun">,</span><span class="lit">0</span><span class="pun">);</span><span class="pln">
+    idata </span><span class="pun">=</span><span class="pln"> drawPixelated</span><span class="pun">.</span><span class="pln">idataById</span><span class="pun">[</span><span class="pln">img</span><span class="pun">.</span><span class="pln">id</span><span class="pun">]</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> ctx</span><span class="pun">.</span><span class="pln">getImageData</span><span class="pun">(</span><span class="lit">0</span><span class="pun">,</span><span class="lit">0</span><span class="pun">,</span><span class="pln">img</span><span class="pun">.</span><span class="pln">width</span><span class="pun">,</span><span class="pln">img</span><span class="pun">.</span><span class="pln">height</span><span class="pun">).</span><span class="pln">data</span><span class="pun">;</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+  </span><span class="kwd">for</span><span class="pln"> </span><span class="pun">(</span><span class="kwd">var</span><span class="pln"> x2</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span><span class="pln">x2</span><span class="pun">&lt;</span><span class="pln">img</span><span class="pun">.</span><span class="pln">width</span><span class="pun">;++</span><span class="pln">x2</span><span class="pun">){</span><span class="pln">
+    </span><span class="kwd">for</span><span class="pln"> </span><span class="pun">(</span><span class="kwd">var</span><span class="pln"> y2</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span><span class="pln">y2</span><span class="pun">&lt;</span><span class="pln">img</span><span class="pun">.</span><span class="pln">height</span><span class="pun">;++</span><span class="pln">y2</span><span class="pun">){</span><span class="pln">
+      </span><span class="kwd">var</span><span class="pln"> i</span><span class="pun">=(</span><span class="pln">y2</span><span class="pun">*</span><span class="pln">img</span><span class="pun">.</span><span class="pln">width</span><span class="pun">+</span><span class="pln">x2</span><span class="pun">)*</span><span class="lit">4</span><span class="pun">;</span><span class="pln">
+      </span><span class="kwd">var</span><span class="pln"> r</span><span class="pun">=</span><span class="pln">idata</span><span class="pun">[</span><span class="pln">i  </span><span class="pun">];</span><span class="pln">
+      </span><span class="kwd">var</span><span class="pln"> g</span><span class="pun">=</span><span class="pln">idata</span><span class="pun">[</span><span class="pln">i</span><span class="pun">+</span><span class="lit">1</span><span class="pun">];</span><span class="pln">
+      </span><span class="kwd">var</span><span class="pln"> b</span><span class="pun">=</span><span class="pln">idata</span><span class="pun">[</span><span class="pln">i</span><span class="pun">+</span><span class="lit">2</span><span class="pun">];</span><span class="pln">
+      </span><span class="kwd">var</span><span class="pln"> a</span><span class="pun">=</span><span class="pln">idata</span><span class="pun">[</span><span class="pln">i</span><span class="pun">+</span><span class="lit">3</span><span class="pun">];</span><span class="pln">
+      context</span><span class="pun">.</span><span class="pln">fillStyle </span><span class="pun">=</span><span class="pln"> </span><span class="str">"rgba("</span><span class="pun">+</span><span class="pln">r</span><span class="pun">+</span><span class="str">","</span><span class="pun">+</span><span class="pln">g</span><span class="pun">+</span><span class="str">","</span><span class="pun">+</span><span class="pln">b</span><span class="pun">+</span><span class="str">","</span><span class="pun">+(</span><span class="pln">a</span><span class="pun">/</span><span class="lit">255</span><span class="pun">)+</span><span class="str">")"</span><span class="pun">;</span><span class="pln">
+      context</span><span class="pun">.</span><span class="pln">fillRect</span><span class="pun">(</span><span class="pln">x</span><span class="pun">+</span><span class="pln">x2</span><span class="pun">*</span><span class="pln">zoom</span><span class="pun">,</span><span class="pln"> y</span><span class="pun">+</span><span class="pln">y2</span><span class="pun">*</span><span class="pln">zoom</span><span class="pun">,</span> <span class="pln">zoom</span><span class="pun">,</span> <span class="pln">zoom</span><span class="pun">);</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+drawPixelated</span><span class="pun">.</span><span class="pln">idataById</span><span class="pun">={};</span><span class="pln">
+drawPixelated</span><span class="pun">.</span><span class="pln">lastImageId</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span></code></pre>
+
+<h2>Zooming via CSS</h2>
+
+<pre class="lang-css prettyprint prettyprinted" style=""><code><span class="pun">.</span><span class="pln">pixelated </span><span class="pun">{</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">optimizeSpeed</span><span class="pun">;</span><span class="pln">             </span><span class="com">/* Legal fallback */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">-moz-crisp-edges</span><span class="pun">;</span><span class="pln">          </span><span class="com">/* Firefox        */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">-o-crisp-edges</span><span class="pun">;</span><span class="pln">            </span><span class="com">/* Opera          */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">-webkit-optimize-contrast</span><span class="pun">;</span><span class="pln"> </span><span class="com">/* Safari         */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">optimize-contrast</span><span class="pun">;</span><span class="pln">         </span><span class="com">/* CSS3 Proposed  */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">crisp-edges</span><span class="pun">;</span><span class="pln">               </span><span class="com">/* CSS4 Proposed  */</span><span class="pln">
+  </span><span class="kwd">image-rendering</span><span class="pun">:</span><span class="pln">pixelated</span><span class="pun">;</span><span class="pln">                 </span><span class="com">/* CSS4 Proposed  */</span><span class="pln">
+  </span><span class="kwd">-ms-interpolation-mode</span><span class="pun">:</span><span class="pln">nearest-neighbor</span><span class="pun">;</span><span class="pln">   </span><span class="com">/* IE8+           */</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+
+<script type="text/javascript">
+
+function drawPixelated(img,context,zoom,x,y){
+	if (!zoom) zoom=4; if (!x) x=0; if (!y) y=0;
+	if (!img.id) img.id = "__img"+(drawPixelated.lastImageId++);
+	var idata = drawPixelated.idataById[img.id];
+	if (!idata){
+		var ctx = document.createElement('canvas').getContext('2d');
+		ctx.width  = img.width;
+		ctx.height = img.height;
+		ctx.drawImage(img,0,0);
+		idata = drawPixelated.idataById[img.id] = ctx.getImageData(0,0,img.width,img.height).data;
+	}
+	for (var x2=0;x2<img.width;++x2){
+		for (var y2=0;y2<img.height;++y2){
+			var i=(y2*img.width+x2)*4;
+			var r=idata[i  ];
+			var g=idata[i+1];
+			var b=idata[i+2];
+			var a=idata[i+3];
+			context.fillStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";
+			context.fillRect(x+x2*zoom, y+y2*zoom, zoom, zoom);
+		}
+	}
+};
+drawPixelated.idataById={};
+drawPixelated.lastImageId=0;
+
+window.onload = function(){
+	var img1 = document.getElementById('i1');   // The original image (original size)
+	var img2 = document.getElementById('i2');   // Image with size set by the browser
+	var c1   = document.getElementById('c1');   // Canvas with drawImage() zooming the image
+	var c2   = document.getElementById('c2');   // Canvas with manual pixelation applied.
+	var img3 = document.getElementById('i3');   // Size set by browser and special CSS applied
+	var z    = document.getElementById('zoom');
+	var ctx1 = c1.getContext('2d');
+	var ctx2 = c2.getContext('2d');
+
+	var zoom = 1;
+	z.onkeyup = z.onchange = z.oninput = z.onmouseup = function redrawImages(){
+		var newZoom = z.value*1;
+		if (isNaN(newZoom) || newZoom == zoom) return;
+		zoom = newZoom;
+		c1.width  = c2.width  = img2.width  = img3.width  = img1.width  * zoom;
+		c1.height = c2.height = img2.height = img3.height = img1.height * zoom;
+
+		ctx1.clearRect(0,0,c1.width,c1.height);
+		ctx1.drawImage(img1,0,0,c1.width,c1.height);
+		ctx2.clearRect(0,0,c2.width,c2.height);
+		drawPixelated(img1,ctx2,zoom);
+	};
+	z.onchange();
+};
+</script>
+</body></html>
